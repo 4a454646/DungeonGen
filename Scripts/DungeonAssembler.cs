@@ -38,7 +38,8 @@ public class DungeonAssembler : MonoBehaviour {
     [SerializeField] private List<GameObject> createdRooms = new List<GameObject>();
     // list of created chunks
     [SerializeField] private List<RoomData> roomsToCreate = new List<RoomData>();
-    private WaitForSeconds quickDelay = new WaitForSeconds(0.01f);
+    private WaitForSeconds shortDelay = new WaitForSeconds(0.01f);
+    private WaitForSeconds longDelay = new WaitForSeconds(0.5f);
 
     private void Start() {
         StartCoroutine(CreateRoomCoro(new Vector2(0, 0), "starter"));
@@ -47,8 +48,9 @@ public class DungeonAssembler : MonoBehaviour {
         StartCoroutine(CreateRoomCoro(new Vector2(0, -1), "n"));
         StartCoroutine(CreateRoomCoro(new Vector2(-1, 0), "e"));
         StartCoroutine(CreateAllRoomsCoro());
-        // StartCoroutine(FixRooms());
     }
+
+    private void BeginGeneration() {}
 
     /// <summary>
     /// Create a room at the designated location, and use recursion to create all nearby rooms.
@@ -100,27 +102,14 @@ public class DungeonAssembler : MonoBehaviour {
             RoomData roomData = roomsToCreate[rand];
             roomsToCreate.RemoveAt(rand);
             if (!(roomPositions.Contains(roomData.pos))) {
-                yield return quickDelay;
+                yield return shortDelay;
                 StartCoroutine(CreateRoomCoro(roomData.pos, roomData.needsEntranceAt));
             }
         }
-        StartCoroutine(FixRooms());
+        StartCoroutine(FixRoomsCoro());
     }
 
-    private void Update() {
-        if (Input.GetKeyDown(KeyCode.Space)) {
-            
-        }
-    }
-
-    private void ResetRooms() {
-        foreach (GameObject room in createdRooms) { Destroy(room); }
-        roomsToCreate.Clear();
-        createdRooms.Clear();
-        roomPositions.Clear();
-    }
-
-    private IEnumerator FixRooms() {
+    private IEnumerator FixRoomsCoro() {
         for (int i = 0; i < createdRooms.Count; i++) {
             GameObject room = createdRooms[i];
             string spriteName = room.GetComponent<SpriteRenderer>().sprite.name;
@@ -150,7 +139,25 @@ public class DungeonAssembler : MonoBehaviour {
                 wantedEntrances = string.Join("", wantedEntrances.Split(unwantedEntrances[k]));
             }
             room.GetComponent<SpriteRenderer>().sprite = allSprites[(from sprite in allSprites select sprite.name).ToList().IndexOf(wantedEntrances)];
-            yield return quickDelay;
+            foreach (Transform child in createdRooms[i].transform) {
+                Destroy(child.gameObject);
+            }
+            if (createdRooms[i].GetComponent<SpriteRenderer>().sprite.name.Contains("n")) {
+                ParentColliderTo("north path collider", createdRooms[i]);
+            }
+            else { ParentColliderTo("north wall collider", createdRooms[i]); }
+            if (createdRooms[i].GetComponent<SpriteRenderer>().sprite.name.Contains("e")) {
+                ParentColliderTo("east path collider", createdRooms[i]);
+            }
+            else { ParentColliderTo("east wall collider", createdRooms[i]); }
+            if (createdRooms[i].GetComponent<SpriteRenderer>().sprite.name.Contains("s")) {
+                ParentColliderTo("south path collider", createdRooms[i]);
+            }
+            else { ParentColliderTo("south wall collider", createdRooms[i]); }
+            if (createdRooms[i].GetComponent<SpriteRenderer>().sprite.name.Contains("w")) {
+                ParentColliderTo("west path collider", createdRooms[i]);
+            }
+            yield return shortDelay;
         }
     }
 
@@ -181,14 +188,14 @@ public class DungeonAssembler : MonoBehaviour {
         else if (roomNeedsEntranceAt == "s") { created.GetComponent<SpriteRenderer>().sprite = southSprites[rand]; }
         else if (roomNeedsEntranceAt == "w") { created.GetComponent<SpriteRenderer>().sprite = westSprites[rand]; }
         else { print("big error"); }
-        // if (createdRooms.Count == Mathf.RoundToInt(desiredRooms / 3)) {
-        //     created.GetComponent<SpriteRenderer>().color = Color.yellow;
-        // }
-        // else if (createdRooms.Count == Mathf.RoundToInt(2 * desiredRooms / 3)) {
-        //     created.GetComponent<SpriteRenderer>().color = Color.yellow;
-        // }
-        // else if (createdRooms.Count == desiredRooms) {
-        //     created.GetComponent<SpriteRenderer>().color = Color.red;
-        // }
+        if (createdRooms.Count == Mathf.RoundToInt(desiredRooms / 3)) {
+            created.GetComponent<SpriteRenderer>().color = Color.yellow;
+        }
+        else if (createdRooms.Count == Mathf.RoundToInt(2 * desiredRooms / 3)) {
+            created.GetComponent<SpriteRenderer>().color = Color.yellow;
+        }
+        else if (createdRooms.Count == desiredRooms) {
+            created.GetComponent<SpriteRenderer>().color = Color.red;
+        }
     }
 }
