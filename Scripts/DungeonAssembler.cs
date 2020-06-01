@@ -8,12 +8,10 @@ public class RoomData {
     public int x;
     public int y;
     public string needsEntranceAt;
-    public string cameFrom;
-    public RoomData(int x, int y, string needsEntranceAt, string cameFrom) {
+    public RoomData(int x, int y, string needsEntranceAt) {
         this.x = x;
         this.y = y;
         this.needsEntranceAt = needsEntranceAt;
-        this.cameFrom = cameFrom;
     }
 }
 
@@ -41,10 +39,7 @@ public class DungeonAssembler : MonoBehaviour {
     // list of positions of chunks
     [SerializeField] private List<GameObject> createdRooms = new List<GameObject>();
     // list of created chunks
-    [SerializeField] private Stack<RoomData> northRoomStack = new Stack<RoomData>();
-    [SerializeField] private Stack<RoomData> eastRoomStack = new Stack<RoomData>();
-    [SerializeField] private Stack<RoomData> southRoomStack = new Stack<RoomData>();
-    [SerializeField] private Stack<RoomData> westRoomStack = new Stack<RoomData>();
+    [SerializeField] private List<RoomData> roomsToCreate = new List<RoomData>();
     [SerializeField] private int stackFlipChance;
     private Dictionary<string, string> oppositeOf = new Dictionary<string, string>() {
         {"n", "s"},
@@ -55,11 +50,11 @@ public class DungeonAssembler : MonoBehaviour {
     private WaitForSeconds quickDelay = new WaitForSeconds(0.01f);
 
     private void Start() {
-        StartCoroutine(CreateRoomCoro(0, 0, "starter", "starter"));
-        StartCoroutine(CreateRoomCoro(0, 1, "s", "n"));
-        StartCoroutine(CreateRoomCoro(1, 0, "w", "e"));
-        StartCoroutine(CreateRoomCoro(0, -1, "n", "s"));
-        StartCoroutine(CreateRoomCoro(-1, 0, "e", "w"));
+        StartCoroutine(CreateRoomCoro(0, 0, "starter"));
+        StartCoroutine(CreateRoomCoro(0, 1, "s"));
+        StartCoroutine(CreateRoomCoro(1, 0, "w"));
+        StartCoroutine(CreateRoomCoro(0, -1, "n"));
+        StartCoroutine(CreateRoomCoro(-1, 0, "e"));
         StartCoroutine(CreateAllRoomsCoro());
         // StartCoroutine(FixRooms());
     }
@@ -70,7 +65,7 @@ public class DungeonAssembler : MonoBehaviour {
     /// <param name="xPos">The x position to create the room at.</param>
     /// <param name="yPos">The y position to create the room at.</param>
     /// <param name="roomNeedsEntranceAt">Which cardinal direction the room must connect to.</param>
-    private IEnumerator CreateRoomCoro(int xPos, int yPos, string roomNeedsEntranceAt, string cameFrom) {
+    private IEnumerator CreateRoomCoro(int xPos, int yPos, string roomNeedsEntranceAt) {
         if (createdRooms.Count >= desiredRooms) { yield break; }
         // instantly break out if we have exceeded the max #
         Vector2 curPos = new Vector2(xPos, yPos);
@@ -88,46 +83,22 @@ public class DungeonAssembler : MonoBehaviour {
         // get the name of the sprite, e.g. 'ew' for east and west entrances
         if (spriteName.Contains("n")) {
             ParentColliderTo("north path collider", created);
-            if (cameFrom == "starter") { northRoomStack.Push(new RoomData(xPos, yPos + 1, "s", "n")); }
-            else { 
-                if (cameFrom == "n") { northRoomStack.Push(new RoomData(xPos, yPos + 1, "s", cameFrom)); }
-                else if (cameFrom == "e") { eastRoomStack.Push(new RoomData(xPos, yPos + 1, "s", cameFrom)); }
-                else if (cameFrom == "s") { southRoomStack.Push(new RoomData(xPos, yPos + 1, "s", cameFrom)); }
-                else if (cameFrom == "w") { westRoomStack.Push(new RoomData(xPos, yPos + 1, "s", cameFrom)); }
-            }
+            roomsToCreate.Add(new RoomData(xPos, yPos + 1, "s"));
         }
         else { ParentColliderTo("north wall collider", created); }
         if (spriteName.Contains("e")) {
             ParentColliderTo("east path collider", created);
-            if (cameFrom == "starter") { eastRoomStack.Push(new RoomData(xPos + 1, yPos, "w", "e")); }
-            else { 
-                if (cameFrom == "n") { northRoomStack.Push(new RoomData(xPos + 1, yPos, "w", cameFrom)); }
-                else if (cameFrom == "e") { eastRoomStack.Push(new RoomData(xPos + 1, yPos, "w", cameFrom)); }
-                else if (cameFrom == "s") { southRoomStack.Push(new RoomData(xPos + 1, yPos, "w", cameFrom)); }
-                else if (cameFrom == "w") { westRoomStack.Push(new RoomData(xPos + 1, yPos, "w", cameFrom)); }
-            }
+            roomsToCreate.Add(new RoomData(xPos + 1, yPos, "w"));
         }
         else { ParentColliderTo("east wall collider", created); }
         if (spriteName.Contains("s")) {
             ParentColliderTo("south path collider", created);
-            if (cameFrom == "starter") { southRoomStack.Push(new RoomData(xPos, yPos - 1, "n", "s")); }
-            else { 
-                if (cameFrom == "n") { northRoomStack.Push(new RoomData(xPos, yPos - 1, "n", cameFrom)); }
-                else if (cameFrom == "e") { eastRoomStack.Push(new RoomData(xPos, yPos - 1, "n", cameFrom)); }
-                else if (cameFrom == "s") { southRoomStack.Push(new RoomData(xPos, yPos - 1, "n", cameFrom)); }
-                else if (cameFrom == "w") { westRoomStack.Push(new RoomData(xPos, yPos - 1, "n", cameFrom)); }
-            }
+            roomsToCreate.Add(new RoomData(xPos, yPos - 1, "n"));
         }
         else { ParentColliderTo("south wall collider", created); }
         if (spriteName.Contains("w")) {
             ParentColliderTo("west path collider", created);
-            if (cameFrom == "starter") { westRoomStack.Push(new RoomData(xPos - 1, yPos, "e", "w")); }
-            else { 
-                if (cameFrom == "n") { northRoomStack.Push(new RoomData(xPos - 1, yPos, "e", cameFrom)); }
-                else if (cameFrom == "e") { eastRoomStack.Push(new RoomData(xPos - 1, yPos, "e", cameFrom)); }
-                else if (cameFrom == "s") { southRoomStack.Push(new RoomData(xPos - 1, yPos, "e", cameFrom)); }
-                else if (cameFrom == "w") { westRoomStack.Push(new RoomData(xPos - 1, yPos, "e", cameFrom)); }
-            }
+            roomsToCreate.Add(new RoomData(xPos - 1, yPos, "e"));
         }
         else { ParentColliderTo("west wall collider", created); }
         // based on the sprite name, create the needed rooms to connect to it
@@ -143,29 +114,8 @@ public class DungeonAssembler : MonoBehaviour {
     private IEnumerator CreateAllRoomsCoro() {
         while (createdRooms.Count < desiredRooms) {
             yield return quickDelay;
-            RoomData roomData;
-            if (Random.Range(0, 100) <= stackFlipChance) {
-                northRoomStack.Reverse();
-                eastRoomStack.Reverse();
-                southRoomStack.Reverse();
-                westRoomStack.Reverse();
-            }
-            if (northRoomStack.Count > 0) {
-                roomData = northRoomStack.Pop();
-                StartCoroutine(CreateRoomCoro(roomData.x, roomData.y, roomData.needsEntranceAt, roomData.cameFrom));
-            }
-            if (eastRoomStack.Count > 0) {
-                roomData = eastRoomStack.Pop();
-                StartCoroutine(CreateRoomCoro(roomData.x, roomData.y, roomData.needsEntranceAt, roomData.cameFrom));
-            }
-            if (southRoomStack.Count > 0) {
-                roomData = southRoomStack.Pop();
-                StartCoroutine(CreateRoomCoro(roomData.x, roomData.y, roomData.needsEntranceAt, roomData.cameFrom));
-            }
-            if (westRoomStack.Count > 0) {
-                roomData = westRoomStack.Pop();
-                StartCoroutine(CreateRoomCoro(roomData.x, roomData.y, roomData.needsEntranceAt, roomData.cameFrom));
-            }
+            RoomData roomData = roomsToCreate[Random.Range(0, roomsToCreate.Count)];
+            StartCoroutine(CreateRoomCoro(roomData.x, roomData.y, roomData.needsEntranceAt));
         }
         yield return quickDelay;
         FixRooms();
@@ -181,7 +131,7 @@ public class DungeonAssembler : MonoBehaviour {
             if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("n")) {
                 Vector2 checkPosition = new Vector2(curRoom.transform.position.x, curRoom.transform.position.y + 1);
                 if (roomPositions.Contains(checkPosition)) {
-                    if(!createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("s")) {
+                    if(!(createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("s"))) {
                         // no south entrance to match the north one
                         unwantedEntrances += "n";
                     }
@@ -193,7 +143,7 @@ public class DungeonAssembler : MonoBehaviour {
             if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("e")) {
                 Vector2 checkPosition = new Vector2(curRoom.transform.position.x + 1, curRoom.transform.position.y);
                 if (roomPositions.Contains(checkPosition)) {
-                    if(!createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("w")) {
+                    if(!(createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("w"))) {
                         unwantedEntrances += "e";
                     }
                 }
@@ -204,7 +154,7 @@ public class DungeonAssembler : MonoBehaviour {
             if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("s")) {
                 Vector2 checkPosition = new Vector2(curRoom.transform.position.x, curRoom.transform.position.y - 1);
                 if (roomPositions.Contains(checkPosition)) {
-                    if(!createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("n")) {
+                    if(!(createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("n"))) {
                         unwantedEntrances += "s";
                     }
                 }
@@ -215,7 +165,7 @@ public class DungeonAssembler : MonoBehaviour {
             if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("w")) {
                 Vector2 checkPosition = new Vector2(curRoom.transform.position.x - 1, curRoom.transform.position.y);
                 if (roomPositions.Contains(checkPosition)) {
-                    if(!createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("e")) {
+                    if(!(createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("e"))) {
                         unwantedEntrances += "w";
                     }
                 }
