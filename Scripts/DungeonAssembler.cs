@@ -131,6 +131,15 @@ public class DungeonAssembler : MonoBehaviour {
             if (spriteName.Contains("n") && !roomPositions.Contains(new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x), Mathf.RoundToInt(createdRooms[i].transform.position.y + 1)))) {
                 unwantedEntrances += "n";
             }
+            if (spriteName.Contains("e") && !roomPositions.Contains(new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x) + 1, Mathf.RoundToInt(createdRooms[i].transform.position.y)))) {
+                unwantedEntrances += "e";
+            }
+            if (spriteName.Contains("s") && !roomPositions.Contains(new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x), Mathf.RoundToInt(createdRooms[i].transform.position.y - 1)))) {
+                unwantedEntrances += "s";
+            }
+            if (spriteName.Contains("w") && !roomPositions.Contains(new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x - 1), Mathf.RoundToInt(createdRooms[i].transform.position.y)))) {
+                unwantedEntrances += "w";
+            }
             for (int k = 0; k < unwantedEntrances.Length; k++) {
                 wantedEntrances = string.Join("", wantedEntrances.Split(unwantedEntrances[k]));
             }
