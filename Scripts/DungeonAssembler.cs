@@ -128,7 +128,11 @@ public class DungeonAssembler : MonoBehaviour {
             string spriteName = room.GetComponent<SpriteRenderer>().sprite.name;
             string wantedEntrances = room.GetComponent<SpriteRenderer>().sprite.name;
             string unwantedEntrances = "";
-            if (spriteName.Contains("n") && !roomPositions.Contains(new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x), Mathf.RoundToInt(createdRooms[i].transform.position.y + 1)))) {
+            Vector2 northCheck = new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x), Mathf.RoundToInt(createdRooms[i].transform.position.y + 1));
+            if (spriteName.Contains("n") && !roomPositions.Contains(northCheck)) {
+                unwantedEntrances += "n";
+            }
+            else if (spriteName.Contains("n") && roomPositions.Contains(northCheck) && !createdRooms[roomPositions.IndexOf(northCheck)].GetComponent<SpriteRenderer>().sprite.name.Contains("s")) {
                 unwantedEntrances += "n";
             }
             if (spriteName.Contains("e") && !roomPositions.Contains(new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x) + 1, Mathf.RoundToInt(createdRooms[i].transform.position.y)))) {
