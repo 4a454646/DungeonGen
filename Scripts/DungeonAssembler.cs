@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+[System.Serializable]
 public class RoomData {
-    public int x {get; set;}
-    public int y {get; set;}
-    public string needsEntranceAt {get; set;}
-    public RoomData(int x, int y, string needsEntranceAt) {
+    public int x;
+    public int y;
+    public string needsEntranceAt;
+    public string cameFrom;
+    public RoomData(int x, int y, string needsEntranceAt, string cameFrom) {
         this.x = x;
         this.y = y;
         this.needsEntranceAt = needsEntranceAt;
+        this.cameFrom = cameFrom;
     }
 }
 
@@ -38,17 +41,25 @@ public class DungeonAssembler : MonoBehaviour {
     // list of positions of chunks
     [SerializeField] private List<GameObject> createdRooms = new List<GameObject>();
     // list of created chunks
-    [SerializeField] private Stack<RoomData> roomsToCreate = new Stack<RoomData>();
+    [SerializeField] private Stack<RoomData> northRoomStack = new Stack<RoomData>();
+    [SerializeField] private Stack<RoomData> eastRoomStack = new Stack<RoomData>();
+    [SerializeField] private Stack<RoomData> southRoomStack = new Stack<RoomData>();
+    [SerializeField] private Stack<RoomData> westRoomStack = new Stack<RoomData>();
+    [SerializeField] private int stackFlipChance;
     private Dictionary<string, string> oppositeOf = new Dictionary<string, string>() {
         {"n", "s"},
         {"e", "w"},
         {"s", "n"},
         {"w", "e"}
     };
-    private WaitForSeconds quickDelay = new WaitForSeconds(0.1f);
+    private WaitForSeconds quickDelay = new WaitForSeconds(0.01f);
 
     private void Start() {
-        StartCoroutine(CreateRoomCoro(0, 0, "starter"));
+        StartCoroutine(CreateRoomCoro(0, 0, "starter", "starter"));
+        StartCoroutine(CreateRoomCoro(0, 1, "s", "n"));
+        StartCoroutine(CreateRoomCoro(1, 0, "w", "e"));
+        StartCoroutine(CreateRoomCoro(0, -1, "n", "s"));
+        StartCoroutine(CreateRoomCoro(-1, 0, "e", "w"));
         StartCoroutine(CreateAllRoomsCoro());
         // StartCoroutine(FixRooms());
     }
@@ -59,7 +70,7 @@ public class DungeonAssembler : MonoBehaviour {
     /// <param name="xPos">The x position to create the room at.</param>
     /// <param name="yPos">The y position to create the room at.</param>
     /// <param name="roomNeedsEntranceAt">Which cardinal direction the room must connect to.</param>
-    private IEnumerator CreateRoomCoro(int xPos, int yPos, string roomNeedsEntranceAt) {
+    private IEnumerator CreateRoomCoro(int xPos, int yPos, string roomNeedsEntranceAt, string cameFrom) {
         if (createdRooms.Count >= desiredRooms) { yield break; }
         // instantly break out if we have exceeded the max #
         Vector2 curPos = new Vector2(xPos, yPos);
@@ -74,58 +85,97 @@ public class DungeonAssembler : MonoBehaviour {
         // based on the needed room, assign the sprite
         GenerateSprite(created, roomNeedsEntranceAt, rand, desiredRooms);
         string spriteName = created.GetComponent<SpriteRenderer>().sprite.name;
-        print($"created {spriteName} room");
         // get the name of the sprite, e.g. 'ew' for east and west entrances
         if (spriteName.Contains("n")) {
             ParentColliderTo("north path collider", created);
-            roomsToCreate.Push(new RoomData(xPos, yPos + 1, "s"));
+            if (cameFrom == "starter") { northRoomStack.Push(new RoomData(xPos, yPos + 1, "s", "n")); }
+            else { 
+                if (cameFrom == "n") { northRoomStack.Push(new RoomData(xPos, yPos + 1, "s", cameFrom)); }
+                else if (cameFrom == "e") { eastRoomStack.Push(new RoomData(xPos, yPos + 1, "s", cameFrom)); }
+                else if (cameFrom == "s") { southRoomStack.Push(new RoomData(xPos, yPos + 1, "s", cameFrom)); }
+                else if (cameFrom == "w") { westRoomStack.Push(new RoomData(xPos, yPos + 1, "s", cameFrom)); }
+            }
         }
         else { ParentColliderTo("north wall collider", created); }
         if (spriteName.Contains("e")) {
             ParentColliderTo("east path collider", created);
-            roomsToCreate.Push(new RoomData(xPos + 1, yPos, "w"));
+            if (cameFrom == "starter") { eastRoomStack.Push(new RoomData(xPos + 1, yPos, "w", "e")); }
+            else { 
+                if (cameFrom == "n") { northRoomStack.Push(new RoomData(xPos + 1, yPos, "w", cameFrom)); }
+                else if (cameFrom == "e") { eastRoomStack.Push(new RoomData(xPos + 1, yPos, "w", cameFrom)); }
+                else if (cameFrom == "s") { southRoomStack.Push(new RoomData(xPos + 1, yPos, "w", cameFrom)); }
+                else if (cameFrom == "w") { westRoomStack.Push(new RoomData(xPos + 1, yPos, "w", cameFrom)); }
+            }
         }
         else { ParentColliderTo("east wall collider", created); }
         if (spriteName.Contains("s")) {
             ParentColliderTo("south path collider", created);
-            roomsToCreate.Push(new RoomData(xPos, yPos - 1, "n"));
+            if (cameFrom == "starter") { southRoomStack.Push(new RoomData(xPos, yPos - 1, "n", "s")); }
+            else { 
+                if (cameFrom == "n") { northRoomStack.Push(new RoomData(xPos, yPos - 1, "n", cameFrom)); }
+                else if (cameFrom == "e") { eastRoomStack.Push(new RoomData(xPos, yPos - 1, "n", cameFrom)); }
+                else if (cameFrom == "s") { southRoomStack.Push(new RoomData(xPos, yPos - 1, "n", cameFrom)); }
+                else if (cameFrom == "w") { westRoomStack.Push(new RoomData(xPos, yPos - 1, "n", cameFrom)); }
+            }
         }
         else { ParentColliderTo("south wall collider", created); }
         if (spriteName.Contains("w")) {
             ParentColliderTo("west path collider", created);
-            roomsToCreate.Push(new RoomData(xPos - 1, yPos, "e"));
+            if (cameFrom == "starter") { westRoomStack.Push(new RoomData(xPos - 1, yPos, "e", "w")); }
+            else { 
+                if (cameFrom == "n") { northRoomStack.Push(new RoomData(xPos - 1, yPos, "e", cameFrom)); }
+                else if (cameFrom == "e") { eastRoomStack.Push(new RoomData(xPos - 1, yPos, "e", cameFrom)); }
+                else if (cameFrom == "s") { southRoomStack.Push(new RoomData(xPos - 1, yPos, "e", cameFrom)); }
+                else if (cameFrom == "w") { westRoomStack.Push(new RoomData(xPos - 1, yPos, "e", cameFrom)); }
+            }
         }
         else { ParentColliderTo("west wall collider", created); }
         // based on the sprite name, create the needed rooms to connect to it
     }
 
     private IEnumerator CreateAllRoomsCoro() {
-        for (int i = 0; i < desiredRooms; i++) {
+        while (createdRooms.Count < desiredRooms) {
             yield return quickDelay;
-            RoomData roomData = roomsToCreate.Pop();
-            StartCoroutine(CreateRoomCoro(roomData.x, roomData.y, roomData.needsEntranceAt));
+            RoomData roomData;
+            if (Random.Range(0, 100) <= stackFlipChance) {
+                northRoomStack.Reverse();
+                eastRoomStack.Reverse();
+                southRoomStack.Reverse();
+                westRoomStack.Reverse();
+            }
+            if (northRoomStack.Count > 0) {
+                roomData = northRoomStack.Pop();
+                StartCoroutine(CreateRoomCoro(roomData.x, roomData.y, roomData.needsEntranceAt, roomData.cameFrom));
+            }
+            if (eastRoomStack.Count > 0) {
+                roomData = eastRoomStack.Pop();
+                StartCoroutine(CreateRoomCoro(roomData.x, roomData.y, roomData.needsEntranceAt, roomData.cameFrom));
+            }
+            if (southRoomStack.Count > 0) {
+                roomData = southRoomStack.Pop();
+                StartCoroutine(CreateRoomCoro(roomData.x, roomData.y, roomData.needsEntranceAt, roomData.cameFrom));
+            }
+            if (westRoomStack.Count > 0) {
+                roomData = westRoomStack.Pop();
+                StartCoroutine(CreateRoomCoro(roomData.x, roomData.y, roomData.needsEntranceAt, roomData.cameFrom));
+            }
         }
+        yield return quickDelay;
+        print("now fixing rooms!");
+        StartCoroutine(FixRooms());
+        // yield return quickDelay;
+        // print("round two");
+        // StartCoroutine(FixRooms());
     }
 
     private IEnumerator FixRooms() {
-        while (createdRooms.Count < desiredRooms - 5) {
-            yield return quickDelay;
-        }
-        yield return quickDelay;
-        yield return quickDelay;
-        yield return quickDelay;
-        yield return quickDelay;
-        yield return quickDelay;
-        yield return quickDelay;
-        yield return quickDelay;
-        yield return quickDelay;
-        yield return quickDelay;
         for (int i = 0; i < createdRooms.Count; i++) {
+            yield return quickDelay;
             string unwantedEntrances = "";
             GameObject curRoom = createdRooms[i];
             Vector2 checkPosition;
             string spriteName = curRoom.GetComponent<SpriteRenderer>().sprite.name;
-            if (spriteName.Contains("n")) {
+            if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("n")) {
                 checkPosition = new Vector2(curRoom.transform.position.x, curRoom.transform.position.y + 1);
                 if (roomPositions.Contains(checkPosition)) {
                     if(!createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("s")) {
@@ -137,7 +187,7 @@ public class DungeonAssembler : MonoBehaviour {
                     unwantedEntrances += "n";
                 }
             }
-            if (spriteName.Contains("e")) {
+            if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("e")) {
                 checkPosition = new Vector2(curRoom.transform.position.x + 1, curRoom.transform.position.y);
                 if (roomPositions.Contains(checkPosition)) {
                     if(!createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("w")) {
@@ -148,7 +198,7 @@ public class DungeonAssembler : MonoBehaviour {
                     unwantedEntrances += "e";
                 }
             }
-            if (spriteName.Contains("s")) {
+            if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("s")) {
                 checkPosition = new Vector2(curRoom.transform.position.x, curRoom.transform.position.y - 1);
                 if (roomPositions.Contains(checkPosition)) {
                     if(!createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("n")) {
@@ -159,7 +209,7 @@ public class DungeonAssembler : MonoBehaviour {
                     unwantedEntrances += "s";
                 }
             }
-            if (spriteName.Contains("w")) {
+            if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("w")) {
                 checkPosition = new Vector2(curRoom.transform.position.x - 1, curRoom.transform.position.y);
                 if (roomPositions.Contains(checkPosition)) {
                     if(!createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("e")) {
@@ -170,17 +220,33 @@ public class DungeonAssembler : MonoBehaviour {
                     unwantedEntrances += "w";
                 }
             }
-            string wantedEntrances = spriteName;
+            string wantedEntrances = curRoom.GetComponent<SpriteRenderer>().sprite.name;
             for (int k = 0; k < unwantedEntrances.Length; k++) {
                wantedEntrances = string.Join("", wantedEntrances.Split(unwantedEntrances[k]));
             }
-            print($"wantedentrances: {wantedEntrances}");
-            print($"is containedin allsprites? {(from sprite in allSprites select sprite.name).ToList().Contains(wantedEntrances)}");
             if (wantedEntrances == "") {
-                Debug.LogError($"big error at {curRoom.transform.position.x}, {curRoom.transform.position.y}");
+                // Debug.LogError($"big error at {curRoom.transform.position.x}, {curRoom.transform.position.y}, whose unwanted entrances were {unwantedEntrances} from spriteName {curRoom.GetComponent<SpriteRenderer>().sprite.name}");
             }
             else {
                 curRoom.GetComponent<SpriteRenderer>().sprite = allSprites[(from sprite in allSprites select sprite.name).ToList().IndexOf(wantedEntrances)];
+            }
+            foreach (Transform child in curRoom.transform) {
+                Destroy(child.gameObject);
+            }
+            if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("n")) {
+                ParentColliderTo("north path collider", curRoom);
+            }
+            else { ParentColliderTo("north wall collider", curRoom); }
+            if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("e")) {
+                ParentColliderTo("east path collider", curRoom);
+            }
+            else { ParentColliderTo("east wall collider", curRoom); }
+            if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("s")) {
+                ParentColliderTo("south path collider", curRoom);
+            }
+            else { ParentColliderTo("south wall collider", curRoom); }
+            if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("w")) {
+                ParentColliderTo("west path collider", curRoom);
             }
         }
     }
@@ -207,38 +273,10 @@ public class DungeonAssembler : MonoBehaviour {
             created.GetComponent<SpriteRenderer>().sortingOrder = 1;
             // set the sprite, make it green, make it go forwards
         }
-        else if (roomNeedsEntranceAt == "n") { 
-            if (createdRooms.Count + Mathf.RoundToInt(desiredRooms / 10) + 1 < desiredRooms) {
-                created.GetComponent<SpriteRenderer>().sprite = northSprites[rand]; 
-            }
-            else {
-                created.GetComponent<SpriteRenderer>().sprite = northEntranceClosing;
-            }
-        }
-        else if (roomNeedsEntranceAt == "e") { 
-            if (createdRooms.Count + Mathf.RoundToInt(desiredRooms / 10) + 1 < desiredRooms) {
-                created.GetComponent<SpriteRenderer>().sprite = eastSprites[rand]; 
-            }
-            else {
-                created.GetComponent<SpriteRenderer>().sprite = eastEntranceClosing;
-            }
-        }
-        else if (roomNeedsEntranceAt == "s") { 
-            if (createdRooms.Count + Mathf.RoundToInt(desiredRooms / 10) + 1 < desiredRooms) {
-                created.GetComponent<SpriteRenderer>().sprite = southSprites[rand]; 
-            }
-            else {
-                created.GetComponent<SpriteRenderer>().sprite = southEntranceClosing;
-            }
-        }
-        else if (roomNeedsEntranceAt == "w") { 
-            if (createdRooms.Count + Mathf.RoundToInt(desiredRooms / 10) + 1 < desiredRooms) {
-                created.GetComponent<SpriteRenderer>().sprite = westSprites[rand]; 
-            }
-            else {
-                created.GetComponent<SpriteRenderer>().sprite = westEntranceClosing;
-            }
-        }
+        else if (roomNeedsEntranceAt == "n") { created.GetComponent<SpriteRenderer>().sprite = northSprites[rand]; }
+        else if (roomNeedsEntranceAt == "e") { created.GetComponent<SpriteRenderer>().sprite = eastSprites[rand]; }
+        else if (roomNeedsEntranceAt == "s") { created.GetComponent<SpriteRenderer>().sprite = southSprites[rand]; }
+        else if (roomNeedsEntranceAt == "w") { created.GetComponent<SpriteRenderer>().sprite = westSprites[rand]; }
         else { print("big error"); }
     }
 }

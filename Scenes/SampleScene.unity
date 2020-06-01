@@ -311,10 +311,10 @@ MonoBehaviour:
   roomPrefab: {fileID: 6051547129883310545, guid: ecea653350bd6db448307a32d23cabe2,
     type: 3}
   roomOffset: 1
-  curRooms: 0
   desiredRooms: 100
   roomPositions: []
   createdRooms: []
+  stackFlipChance: 50
 --- !u!4 &818574942
 Transform:
   m_ObjectHideFlags: 0
