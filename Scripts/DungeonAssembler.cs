@@ -133,6 +133,13 @@ public class DungeonAssembler : MonoBehaviour {
         // based on the sprite name, create the needed rooms to connect to it
     }
 
+    private void FixRoomPositions() {
+        roomPositions.Clear();
+        for (int i = 0; i < createdRooms.Count; i++) {
+            roomPositions.Add(new Vector2(createdRooms[i].transform.position.x, createdRooms[i].transform.position.y));
+        }
+    }
+
     private IEnumerator CreateAllRoomsCoro() {
         while (createdRooms.Count < desiredRooms) {
             yield return quickDelay;
@@ -161,22 +168,18 @@ public class DungeonAssembler : MonoBehaviour {
             }
         }
         yield return quickDelay;
-        print("now fixing rooms!");
+        FixRooms();
+        yield return quickDelay;
         StartCoroutine(FixRooms());
         yield return quickDelay;
-        print("round two");
         StartCoroutine(FixRooms());
     }
 
     private IEnumerator FixRooms() {
-        for (int i = 0; i < createdRooms.Count; i++) {
-            yield return quickDelay;
+        foreach (GameObject curRoom in createdRooms) {
             string unwantedEntrances = "";
-            GameObject curRoom = createdRooms[i];
-            Vector2 checkPosition;
-            string spriteName = curRoom.GetComponent<SpriteRenderer>().sprite.name;
             if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("n")) {
-                checkPosition = new Vector2(curRoom.transform.position.x, curRoom.transform.position.y + 1);
+                Vector2 checkPosition = new Vector2(curRoom.transform.position.x, curRoom.transform.position.y + 1);
                 if (roomPositions.Contains(checkPosition)) {
                     if(!createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("s")) {
                         // no south entrance to match the north one
@@ -188,7 +191,7 @@ public class DungeonAssembler : MonoBehaviour {
                 }
             }
             if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("e")) {
-                checkPosition = new Vector2(curRoom.transform.position.x + 1, curRoom.transform.position.y);
+                Vector2 checkPosition = new Vector2(curRoom.transform.position.x + 1, curRoom.transform.position.y);
                 if (roomPositions.Contains(checkPosition)) {
                     if(!createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("w")) {
                         unwantedEntrances += "e";
@@ -199,7 +202,7 @@ public class DungeonAssembler : MonoBehaviour {
                 }
             }
             if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("s")) {
-                checkPosition = new Vector2(curRoom.transform.position.x, curRoom.transform.position.y - 1);
+                Vector2 checkPosition = new Vector2(curRoom.transform.position.x, curRoom.transform.position.y - 1);
                 if (roomPositions.Contains(checkPosition)) {
                     if(!createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("n")) {
                         unwantedEntrances += "s";
@@ -210,7 +213,7 @@ public class DungeonAssembler : MonoBehaviour {
                 }
             }
             if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("w")) {
-                checkPosition = new Vector2(curRoom.transform.position.x - 1, curRoom.transform.position.y);
+                Vector2 checkPosition = new Vector2(curRoom.transform.position.x - 1, curRoom.transform.position.y);
                 if (roomPositions.Contains(checkPosition)) {
                     if(!createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("e")) {
                         unwantedEntrances += "w";
@@ -224,12 +227,10 @@ public class DungeonAssembler : MonoBehaviour {
             for (int k = 0; k < unwantedEntrances.Length; k++) {
                wantedEntrances = string.Join("", wantedEntrances.Split(unwantedEntrances[k]));
             }
-            if (wantedEntrances == "") {
-                // Debug.LogError($"big error at {curRoom.transform.position.x}, {curRoom.transform.position.y}, whose unwanted entrances were {unwantedEntrances} from spriteName {curRoom.GetComponent<SpriteRenderer>().sprite.name}");
-            }
-            else {
+            try {
                 curRoom.GetComponent<SpriteRenderer>().sprite = allSprites[(from sprite in allSprites select sprite.name).ToList().IndexOf(wantedEntrances)];
             }
+            catch { print($"error from sprite getting of {wantedEntrances}"); }
             foreach (Transform child in curRoom.transform) {
                 Destroy(child.gameObject);
             }
@@ -248,6 +249,7 @@ public class DungeonAssembler : MonoBehaviour {
             if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("w")) {
                 ParentColliderTo("west path collider", curRoom);
             }
+            yield return quickDelay;
         }
     }
 
