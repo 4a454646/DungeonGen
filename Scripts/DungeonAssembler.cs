@@ -104,12 +104,12 @@ public class DungeonAssembler : MonoBehaviour {
                 StartCoroutine(CreateRoomCoro(roomData.pos, roomData.needsEntranceAt));
             }
         }
+        CheckRoomPositions();
     }
 
     private void Update() {
         if (Input.GetKeyDown(KeyCode.Space)) {
-            CheckRoomPositions();
-            StartCoroutine(oogabooga());
+            StartCoroutine(FixRooms());
         }
     }
 
@@ -122,105 +122,19 @@ public class DungeonAssembler : MonoBehaviour {
         }
     }
 
-    private IEnumerator oogabooga() {
-        foreach (GameObject curRoom in createdRooms) {
+    private IEnumerator FixRooms() {
+        for (int i = 0; i < createdRooms.Count; i++) {
+            GameObject room = createdRooms[i];
+            string spriteName = room.GetComponent<SpriteRenderer>().sprite.name;
+            string wantedEntrances = room.GetComponent<SpriteRenderer>().sprite.name;
             string unwantedEntrances = "";
-            if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("n")) {
-                Vector2 checkPosition = new Vector2(Mathf.RoundToInt(curRoom.transform.position.x), Mathf.RoundToInt(curRoom.transform.position.y + 1));
-                if (roomPositions.Contains(checkPosition)) {
-                    if(!(createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("s"))) {
-                        // no south entrance to match the north one
-                        print($"{curRoom.GetComponent<SpriteRenderer>().sprite.name} at ({curRoom.transform.position.x}, {curRoom.transform.position.y}), checked position ({checkPosition.x}, {checkPosition.y}), which has entrances {createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name} DID NOT include the required southern entrance");
-                        unwantedEntrances += "n";
-                    }
-                    else {
-                        print($"{curRoom.GetComponent<SpriteRenderer>().sprite.name} at ({curRoom.transform.position.x}, {curRoom.transform.position.y}), checking position ({checkPosition.x}, {checkPosition.y}), which has entrances {createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name}, which HAD the required southern entrance");
-
-                    }
-                }
-                else {
-                    print($"{curRoom.GetComponent<SpriteRenderer>().sprite.name} at ({curRoom.transform.position.x}, {curRoom.transform.position.y}), checked position ({checkPosition.x}, {checkPosition.y}), for a southern entrance, there was nothing there");
-                    unwantedEntrances += "n";
-                }
+            if (spriteName.Contains("n") && !roomPositions.Contains(new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x), Mathf.RoundToInt(createdRooms[i].transform.position.y + 1)))) {
+                unwantedEntrances += "n";
             }
-            if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("e")) {
-                Vector2 checkPosition = new Vector2(curRoom.transform.position.x + 1, curRoom.transform.position.y);
-                if (roomPositions.Contains(checkPosition)) {
-                    if(!(createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("w"))) {
-                        unwantedEntrances += "e";
-                        print($"{curRoom.GetComponent<SpriteRenderer>().sprite.name} at ({curRoom.transform.position.x}, {curRoom.transform.position.y}), checked position ({checkPosition.x}, {checkPosition.y}), which has entrances {createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name} DID NOT include the required western entrance");
-                    }
-                    else {
-                        print($"{curRoom.GetComponent<SpriteRenderer>().sprite.name} at ({curRoom.transform.position.x}, {curRoom.transform.position.y}), checking position ({checkPosition.x}, {checkPosition.y}), which has entrances {createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name}, which HAD the required western entrance");
-                    }
-                }
-                else {
-                    print($"{curRoom.GetComponent<SpriteRenderer>().sprite.name} at ({curRoom.transform.position.x}, {curRoom.transform.position.y}), checked position ({checkPosition.x}, {checkPosition.y}), for a western entrance, there was nothing there");
-                    unwantedEntrances += "e";
-                }
-            }
-            if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("s")) {
-                Vector2 checkPosition = new Vector2(curRoom.transform.position.x, curRoom.transform.position.y - 1);
-                if (roomPositions.Contains(checkPosition)) {
-                    if(!(createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("n"))) {
-                        unwantedEntrances += "s";
-                        print($"{curRoom.GetComponent<SpriteRenderer>().sprite.name} at ({curRoom.transform.position.x}, {curRoom.transform.position.y}), checked position ({checkPosition.x}, {checkPosition.y}), which has entrances {createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name} DID NOT include the required northern entrance");
-
-                    }
-                    else {
-                        print($"{curRoom.GetComponent<SpriteRenderer>().sprite.name} at ({curRoom.transform.position.x}, {curRoom.transform.position.y}), checking position ({checkPosition.x}, {checkPosition.y}), which has entrances {createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name}, which HAD the required northern entrance");
-                    }
-                }
-                else {
-                    print($"{curRoom.GetComponent<SpriteRenderer>().sprite.name} at ({curRoom.transform.position.x}, {curRoom.transform.position.y}), checked position ({checkPosition.x}, {checkPosition.y}), for a northern entrance, there was nothing there");
-                    unwantedEntrances += "s";
-                }
-            }
-            if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("w")) {
-                Vector2 checkPosition = new Vector2(curRoom.transform.position.x - 1, curRoom.transform.position.y);
-                if (roomPositions.Contains(checkPosition)) {
-                    if(!(createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name.Contains("e"))) {
-                        unwantedEntrances += "w";
-                        print($"{curRoom.GetComponent<SpriteRenderer>().sprite.name} at ({curRoom.transform.position.x}, {curRoom.transform.position.y}), checked position ({checkPosition.x}, {checkPosition.y}), which has entrances {createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name} DID NOT include the required eastern entrance");
-
-                    }
-                    else {
-                        print($"{curRoom.GetComponent<SpriteRenderer>().sprite.name} at ({curRoom.transform.position.x}, {curRoom.transform.position.y}), checking position ({checkPosition.x}, {checkPosition.y}), which has entrances {createdRooms[roomPositions.IndexOf(checkPosition)].GetComponent<SpriteRenderer>().sprite.name}, which HAD the required eastern entrance");
-                    }
-                }
-                else {
-                    print($"{curRoom.GetComponent<SpriteRenderer>().sprite.name} at ({curRoom.transform.position.x}, {curRoom.transform.position.y}), checked position ({checkPosition.x}, {checkPosition.y}), for a eastern entrance, there was nothing there");
-                    unwantedEntrances += "w";
-                }
-            }
-            string wantedEntrances = curRoom.GetComponent<SpriteRenderer>().sprite.name;
             for (int k = 0; k < unwantedEntrances.Length; k++) {
-               wantedEntrances = string.Join("", wantedEntrances.Split(unwantedEntrances[k]));
+                wantedEntrances = string.Join("", wantedEntrances.Split(unwantedEntrances[k]));
             }
-            try {
-                curRoom.GetComponent<SpriteRenderer>().sprite = allSprites[(from sprite in allSprites select sprite.name).ToList().IndexOf(wantedEntrances)];
-            }
-            catch { 
-                // print($"error from sprite getting of {wantedEntrances} at ({curRoom.transform.position.x}, {curRoom.transform.position.y})"); 
-            }
-            foreach (Transform child in curRoom.transform) {
-                Destroy(child.gameObject);
-            }
-            if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("n")) {
-                ParentColliderTo("north path collider", curRoom);
-            }
-            else { ParentColliderTo("north wall collider", curRoom); }
-            if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("e")) {
-                ParentColliderTo("east path collider", curRoom);
-            }
-            else { ParentColliderTo("east wall collider", curRoom); }
-            if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("s")) {
-                ParentColliderTo("south path collider", curRoom);
-            }
-            else { ParentColliderTo("south wall collider", curRoom); }
-            if (curRoom.GetComponent<SpriteRenderer>().sprite.name.Contains("w")) {
-                ParentColliderTo("west path collider", curRoom);
-            }
+            room.GetComponent<SpriteRenderer>().sprite = allSprites[(from sprite in allSprites select sprite.name).ToList().IndexOf(wantedEntrances)];
             yield return quickDelay;
         }
     }
