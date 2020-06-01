@@ -188,13 +188,13 @@ public class DungeonAssembler : MonoBehaviour {
         else if (roomNeedsEntranceAt == "s") { created.GetComponent<SpriteRenderer>().sprite = southSprites[rand]; }
         else if (roomNeedsEntranceAt == "w") { created.GetComponent<SpriteRenderer>().sprite = westSprites[rand]; }
         else { print("big error"); }
-        if (createdRooms.Count == Mathf.RoundToInt(desiredRooms / 3)) {
+        if (createdRooms.Count == Mathf.RoundToInt(2 * desiredRooms / 5)) {
             created.GetComponent<SpriteRenderer>().color = Color.yellow;
         }
-        else if (createdRooms.Count == Mathf.RoundToInt(2 * desiredRooms / 3)) {
+        else if (createdRooms.Count == Mathf.RoundToInt(3 * desiredRooms / 5)) {
             created.GetComponent<SpriteRenderer>().color = Color.yellow;
         }
-        else if (createdRooms.Count == desiredRooms) {
+        else if (createdRooms.Count == Mathf.RoundToInt(4 * desiredRooms / 5)) {
             created.GetComponent<SpriteRenderer>().color = Color.red;
         }
     }

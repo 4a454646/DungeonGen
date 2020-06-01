@@ -314,7 +314,7 @@ MonoBehaviour:
   desiredRooms: 100
   roomPositions: []
   createdRooms: []
-  stackFlipChance: 100
+  roomsToCreate: []
 --- !u!4 &818574942
 Transform:
   m_ObjectHideFlags: 0
