@@ -5,12 +5,10 @@ using UnityEngine;
 
 [System.Serializable]
 public class RoomData {
-    public int x;
-    public int y;
+    public Vector2 pos;
     public string needsEntranceAt;
-    public RoomData(int x, int y, string needsEntranceAt) {
-        this.x = x;
-        this.y = y;
+    public RoomData(Vector2 pos, string needsEntranceAt) {
+        this.pos = pos;
         this.needsEntranceAt = needsEntranceAt;
     }
 }
@@ -50,11 +48,11 @@ public class DungeonAssembler : MonoBehaviour {
     private WaitForSeconds quickDelay = new WaitForSeconds(0.01f);
 
     private void Start() {
-        StartCoroutine(CreateRoomCoro(0, 0, "starter"));
-        StartCoroutine(CreateRoomCoro(0, 1, "s"));
-        StartCoroutine(CreateRoomCoro(1, 0, "w"));
-        StartCoroutine(CreateRoomCoro(0, -1, "n"));
-        StartCoroutine(CreateRoomCoro(-1, 0, "e"));
+        StartCoroutine(CreateRoomCoro(new Vector2(0, 0), "starter"));
+        StartCoroutine(CreateRoomCoro(new Vector2(0, 1), "s"));
+        StartCoroutine(CreateRoomCoro(new Vector2(1, 0), "w"));
+        StartCoroutine(CreateRoomCoro(new Vector2(0, -1), "n"));
+        StartCoroutine(CreateRoomCoro(new Vector2(-1, 0), "e"));
         StartCoroutine(CreateAllRoomsCoro());
         // StartCoroutine(FixRooms());
     }
@@ -65,14 +63,13 @@ public class DungeonAssembler : MonoBehaviour {
     /// <param name="xPos">The x position to create the room at.</param>
     /// <param name="yPos">The y position to create the room at.</param>
     /// <param name="roomNeedsEntranceAt">Which cardinal direction the room must connect to.</param>
-    private IEnumerator CreateRoomCoro(int xPos, int yPos, string roomNeedsEntranceAt) {
+    private IEnumerator CreateRoomCoro(Vector2 pos, string roomNeedsEntranceAt) {
         if (createdRooms.Count >= desiredRooms) { yield break; }
         // instantly break out if we have exceeded the max #
-        Vector2 curPos = new Vector2(xPos, yPos);
-        if (roomPositions.Contains(curPos)) { yield break; }
-        roomPositions.Add(curPos);
-        // if the position is already created, break out
-        GameObject created = Instantiate(roomPrefab, new Vector3(xPos * roomOffset, yPos * roomOffset, 0), Quaternion.identity);
+        if (roomPositions.Contains(pos)) { yield break; }
+        roomPositions.Add(pos);
+        // if the position is already created, break out, REDUNDANT BUT NEEDED FOR SOME REASON
+        GameObject created = Instantiate(roomPrefab, new Vector3(pos.x * roomOffset, pos.y * roomOffset, 0), Quaternion.identity);
         createdRooms.Add(created);
         // create a gameobject from the prefab at the designated location.
         int rand = Random.Range(0, 9);
@@ -83,47 +80,49 @@ public class DungeonAssembler : MonoBehaviour {
         // get the name of the sprite, e.g. 'ew' for east and west entrances
         if (spriteName.Contains("n")) {
             ParentColliderTo("north path collider", created);
-            roomsToCreate.Add(new RoomData(xPos, yPos + 1, "s"));
+            roomsToCreate.Add(new RoomData(new Vector2(pos.x, pos.y + 1), "s"));
         }
         else { ParentColliderTo("north wall collider", created); }
         if (spriteName.Contains("e")) {
             ParentColliderTo("east path collider", created);
-            roomsToCreate.Add(new RoomData(xPos + 1, yPos, "w"));
+            roomsToCreate.Add(new RoomData(new Vector2(pos.x + 1, pos.y), "w"));
         }
         else { ParentColliderTo("east wall collider", created); }
         if (spriteName.Contains("s")) {
             ParentColliderTo("south path collider", created);
-            roomsToCreate.Add(new RoomData(xPos, yPos - 1, "n"));
+            roomsToCreate.Add(new RoomData(new Vector2(pos.x, pos.y - 1), "n"));
         }
         else { ParentColliderTo("south wall collider", created); }
         if (spriteName.Contains("w")) {
             ParentColliderTo("west path collider", created);
-            roomsToCreate.Add(new RoomData(xPos - 1, yPos, "e"));
+            roomsToCreate.Add(new RoomData(new Vector2(pos.x - 1, pos.y), "e"));
         }
         else { ParentColliderTo("west wall collider", created); }
         // based on the sprite name, create the needed rooms to connect to it
     }
 
-    private void FixRoomPositions() {
-        roomPositions.Clear();
-        for (int i = 0; i < createdRooms.Count; i++) {
-            roomPositions.Add(new Vector2(createdRooms[i].transform.position.x, createdRooms[i].transform.position.y));
+    private IEnumerator CreateAllRoomsCoro() {
+        while (createdRooms.Count < desiredRooms) {
+            RoomData roomData = roomsToCreate[Random.Range(0, roomsToCreate.Count)];
+            if (!(roomPositions.Contains(roomData.pos))) {
+                yield return quickDelay;
+                StartCoroutine(CreateRoomCoro(roomData.pos, roomData.needsEntranceAt));
+            }
         }
     }
 
-    private IEnumerator CreateAllRoomsCoro() {
-        while (createdRooms.Count < desiredRooms) {
-            yield return quickDelay;
-            RoomData roomData = roomsToCreate[Random.Range(0, roomsToCreate.Count)];
-            StartCoroutine(CreateRoomCoro(roomData.x, roomData.y, roomData.needsEntranceAt));
+    private void Update() {
+        if (Input.GetKeyDown(KeyCode.Space)) {
+            StartCoroutine(FixRooms());
         }
-        yield return quickDelay;
-        FixRooms();
-        yield return quickDelay;
-        StartCoroutine(FixRooms());
-        yield return quickDelay;
-        StartCoroutine(FixRooms());
     }
+
+    // private void FixRoomPositions() {
+    //     roomPositions.Clear();
+    //     for (int i = 0; i < createdRooms.Count; i++) {
+    //         roomPositions.Add(new Vector2(createdRooms[i].transform.position.x, createdRooms[i].transform.position.y));
+    //     }
+    // }
 
     private IEnumerator FixRooms() {
         foreach (GameObject curRoom in createdRooms) {
@@ -230,5 +229,14 @@ public class DungeonAssembler : MonoBehaviour {
         else if (roomNeedsEntranceAt == "s") { created.GetComponent<SpriteRenderer>().sprite = southSprites[rand]; }
         else if (roomNeedsEntranceAt == "w") { created.GetComponent<SpriteRenderer>().sprite = westSprites[rand]; }
         else { print("big error"); }
+        if (createdRooms.Count == Mathf.RoundToInt(desiredRooms / 3)) {
+            created.GetComponent<SpriteRenderer>().color = Color.yellow;
+        }
+        else if (createdRooms.Count == Mathf.RoundToInt(2 * desiredRooms / 3)) {
+            created.GetComponent<SpriteRenderer>().color = Color.yellow;
+        }
+        else if (createdRooms.Count == desiredRooms) {
+            created.GetComponent<SpriteRenderer>().color = Color.red;
+        }
     }
 }
