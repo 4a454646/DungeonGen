@@ -163,9 +163,9 @@ public class DungeonAssembler : MonoBehaviour {
         yield return quickDelay;
         print("now fixing rooms!");
         StartCoroutine(FixRooms());
-        // yield return quickDelay;
-        // print("round two");
-        // StartCoroutine(FixRooms());
+        yield return quickDelay;
+        print("round two");
+        StartCoroutine(FixRooms());
     }
 
     private IEnumerator FixRooms() {
