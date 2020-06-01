@@ -104,22 +104,20 @@ public class DungeonAssembler : MonoBehaviour {
                 StartCoroutine(CreateRoomCoro(roomData.pos, roomData.needsEntranceAt));
             }
         }
-        CheckRoomPositions();
+        StartCoroutine(FixRooms());
     }
 
     private void Update() {
         if (Input.GetKeyDown(KeyCode.Space)) {
-            StartCoroutine(FixRooms());
+            
         }
     }
 
-    private void CheckRoomPositions() {
+    private void ResetRooms() {
+        foreach (GameObject room in createdRooms) { Destroy(room); }
+        roomsToCreate.Clear();
+        createdRooms.Clear();
         roomPositions.Clear();
-        for (int i = 0; i < createdRooms.Count; i++) {
-            Vector2 rounded = new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x), Mathf.RoundToInt(createdRooms[i].transform.position.y));
-            createdRooms[i].transform.position = rounded;
-            roomPositions.Add(rounded);
-        }
     }
 
     private IEnumerator FixRooms() {
@@ -129,19 +127,23 @@ public class DungeonAssembler : MonoBehaviour {
             string wantedEntrances = room.GetComponent<SpriteRenderer>().sprite.name;
             string unwantedEntrances = "";
             Vector2 northCheck = new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x), Mathf.RoundToInt(createdRooms[i].transform.position.y + 1));
-            if (spriteName.Contains("n") && !roomPositions.Contains(northCheck)) {
+            Vector2 eastCheck = new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x + 1), Mathf.RoundToInt(createdRooms[i].transform.position.y));
+            Vector2 southCheck = new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x), Mathf.RoundToInt(createdRooms[i].transform.position.y - 1));
+            Vector2 westCheck = new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x - 1), Mathf.RoundToInt(createdRooms[i].transform.position.y));
+            if (spriteName.Contains("n") && !roomPositions.Contains(northCheck) || spriteName.Contains("n") && roomPositions.Contains(northCheck) && 
+                !createdRooms[roomPositions.IndexOf(northCheck)].GetComponent<SpriteRenderer>().sprite.name.Contains("s")) {
                 unwantedEntrances += "n";
             }
-            else if (spriteName.Contains("n") && roomPositions.Contains(northCheck) && !createdRooms[roomPositions.IndexOf(northCheck)].GetComponent<SpriteRenderer>().sprite.name.Contains("s")) {
-                unwantedEntrances += "n";
-            }
-            if (spriteName.Contains("e") && !roomPositions.Contains(new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x) + 1, Mathf.RoundToInt(createdRooms[i].transform.position.y)))) {
+            if (spriteName.Contains("e") && !roomPositions.Contains(eastCheck) || spriteName.Contains("e") && roomPositions.Contains(eastCheck) && 
+                !createdRooms[roomPositions.IndexOf(eastCheck)].GetComponent<SpriteRenderer>().sprite.name.Contains("w")) {
                 unwantedEntrances += "e";
             }
-            if (spriteName.Contains("s") && !roomPositions.Contains(new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x), Mathf.RoundToInt(createdRooms[i].transform.position.y - 1)))) {
+            if (spriteName.Contains("s") && !roomPositions.Contains(southCheck) || spriteName.Contains("s") && roomPositions.Contains(southCheck) && 
+                !createdRooms[roomPositions.IndexOf(southCheck)].GetComponent<SpriteRenderer>().sprite.name.Contains("n")) {
                 unwantedEntrances += "s";
             }
-            if (spriteName.Contains("w") && !roomPositions.Contains(new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x - 1), Mathf.RoundToInt(createdRooms[i].transform.position.y)))) {
+            if (spriteName.Contains("w") && !roomPositions.Contains(westCheck) || spriteName.Contains("w") && roomPositions.Contains(westCheck) && 
+                !createdRooms[roomPositions.IndexOf(westCheck)].GetComponent<SpriteRenderer>().sprite.name.Contains("e")) {
                 unwantedEntrances += "w";
             }
             for (int k = 0; k < unwantedEntrances.Length; k++) {
