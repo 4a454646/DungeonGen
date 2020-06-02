@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5367950805060902999}
   - component: {fileID: 274376759635676588}
   - component: {fileID: 3468183657618786082}
+  - component: {fileID: -6058560013673657522}
   m_Layer: 8
   m_Name: room prefab
   m_TagString: Untagged
@@ -103,3 +104,17 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 7
+--- !u!114 &-6058560013673657522
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6051547129883310545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63962a1277658324c94d478a9532d2d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pos: {x: 0, y: 0}
+  needsEntranceAt: 

@@ -87,6 +87,8 @@ public class DungeonAssembler : MonoBehaviour {
         // if the position is already created, break out, REDUNDANT BUT NEEDED FOR SOME REASON
         GameObject created = Instantiate(roomPrefab, new Vector3(pos.x * roomOffset, pos.y * roomOffset, 0), Quaternion.identity);
         createdRooms.Add(created);
+        created.GetComponent<Room>().needsEntranceAt = roomNeedsEntranceAt;
+        created.GetComponent<Room>().pos = pos;
         // create a gameobject from the prefab at the designated location, and add it to the list
         int rand = Random.Range(0, 9);
         // create a random number, 0-9
