@@ -38,19 +38,17 @@ public class DungeonAssembler : MonoBehaviour {
     [SerializeField] private List<GameObject> createdRooms = new List<GameObject>();
     // list of created chunks
     [SerializeField] private List<RoomData> roomsToCreate = new List<RoomData>();
-    private WaitForSeconds shortDelay = new WaitForSeconds(0.01f);
+    private WaitForSeconds shortDelay = new WaitForSeconds(0f);
     private WaitForSeconds longDelay = new WaitForSeconds(0.5f);
 
     private void Start() {
-        StartCoroutine(CreateRoomCoro(new Vector2(0, 0), "starter"));
-        StartCoroutine(CreateRoomCoro(new Vector2(0, 1), "s"));
-        StartCoroutine(CreateRoomCoro(new Vector2(1, 0), "w"));
-        StartCoroutine(CreateRoomCoro(new Vector2(0, -1), "n"));
-        StartCoroutine(CreateRoomCoro(new Vector2(-1, 0), "e"));
+        CreateRoom(new Vector2(0, 0), "starter");
+        CreateRoom(new Vector2(0, 1), "s");
+        CreateRoom(new Vector2(1, 0), "w");
+        CreateRoom(new Vector2(0, -1), "n");
+        CreateRoom(new Vector2(-1, 0), "e");
         StartCoroutine(CreateAllRoomsCoro());
     }
-
-    private void BeginGeneration() {}
 
     /// <summary>
     /// Create a room at the designated location, and use recursion to create all nearby rooms.
@@ -58,10 +56,10 @@ public class DungeonAssembler : MonoBehaviour {
     /// <param name="xPos">The x position to create the room at.</param>
     /// <param name="yPos">The y position to create the room at.</param>
     /// <param name="roomNeedsEntranceAt">Which cardinal direction the room must connect to.</param>
-    private IEnumerator CreateRoomCoro(Vector2 pos, string roomNeedsEntranceAt) {
-        if (createdRooms.Count >= desiredRooms) { yield break; }
+    private void CreateRoom(Vector2 pos, string roomNeedsEntranceAt) {
+        if (createdRooms.Count >= desiredRooms) { return; }
         // instantly break out if we have exceeded the max #
-        if (roomPositions.Contains(pos)) { yield break; }
+        if (roomPositions.Contains(pos)) { return; }
         roomPositions.Add(pos);
         // if the position is already created, break out, REDUNDANT BUT NEEDED FOR SOME REASON
         GameObject created = Instantiate(roomPrefab, new Vector3(pos.x * roomOffset, pos.y * roomOffset, 0), Quaternion.identity);
@@ -103,7 +101,7 @@ public class DungeonAssembler : MonoBehaviour {
             roomsToCreate.RemoveAt(rand);
             if (!(roomPositions.Contains(roomData.pos))) {
                 yield return shortDelay;
-                StartCoroutine(CreateRoomCoro(roomData.pos, roomData.needsEntranceAt));
+                CreateRoom(roomData.pos, roomData.needsEntranceAt);
             }
         }
         StartCoroutine(FixRoomsCoro());
@@ -188,13 +186,13 @@ public class DungeonAssembler : MonoBehaviour {
         else if (roomNeedsEntranceAt == "s") { created.GetComponent<SpriteRenderer>().sprite = southSprites[rand]; }
         else if (roomNeedsEntranceAt == "w") { created.GetComponent<SpriteRenderer>().sprite = westSprites[rand]; }
         else { print("big error"); }
-        if (createdRooms.Count == Mathf.RoundToInt(2 * desiredRooms / 5)) {
+        if (createdRooms.Count == Mathf.RoundToInt(desiredRooms / 3)) {
             created.GetComponent<SpriteRenderer>().color = Color.yellow;
         }
-        else if (createdRooms.Count == Mathf.RoundToInt(3 * desiredRooms / 5)) {
+        else if (createdRooms.Count == Mathf.RoundToInt(2 * desiredRooms / 3)) {
             created.GetComponent<SpriteRenderer>().color = Color.yellow;
         }
-        else if (createdRooms.Count == Mathf.RoundToInt(4 * desiredRooms / 5)) {
+        else if (createdRooms.Count == desiredRooms) {
             created.GetComponent<SpriteRenderer>().color = Color.red;
         }
     }
