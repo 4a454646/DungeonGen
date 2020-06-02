@@ -62,7 +62,7 @@ public class DungeonAssembler : MonoBehaviour {
             // get the data from that location
             roomsToCreate.RemoveAt(rand);
             // and then remove it
-            if (!(roomPositions.Contains(roomData.pos))) {
+            if (!(roomPositions.Contains(new Vector2(roomData.pos.x * roomOffset, roomData.pos.y * roomOffset)))) {
                 // as long as the position isn't already taken
                 yield return shortDelay;
                 // quick delay (only use for visual effects)
@@ -82,13 +82,15 @@ public class DungeonAssembler : MonoBehaviour {
     private void CreateRoom(Vector2 pos, string roomNeedsEntranceAt) {
         if (createdRooms.Count >= desiredRooms) { return; }
         // instantly break out if we have exceeded the max #
-        if (roomPositions.Contains(pos)) { return; }
-        roomPositions.Add(pos);
+        Vector2 offsetRoom = new Vector2(pos.x * roomOffset, pos.y * roomOffset);
+        if (roomPositions.Contains(offsetRoom)) { return; }
+        roomPositions.Add(offsetRoom);
         // if the position is already created, break out, REDUNDANT BUT NEEDED FOR SOME REASON
-        GameObject created = Instantiate(roomPrefab, new Vector3(pos.x * roomOffset, pos.y * roomOffset, 0), Quaternion.identity);
+        GameObject created = Instantiate(roomPrefab, offsetRoom, Quaternion.identity);
         createdRooms.Add(created);
         created.GetComponent<Room>().needsEntranceAt = roomNeedsEntranceAt;
-        created.GetComponent<Room>().pos = pos;
+        created.GetComponent<Room>().truePos = offsetRoom;
+        created.GetComponent<Room>().pos01 = pos;
         // create a gameobject from the prefab at the designated location, and add it to the list
         int rand = Random.Range(0, 9);
         // create a random number, 0-9
@@ -134,10 +136,18 @@ public class DungeonAssembler : MonoBehaviour {
             string spriteName = room.GetComponent<SpriteRenderer>().sprite.name;
             string wantedEntrances = room.GetComponent<SpriteRenderer>().sprite.name;
             string unwantedEntrances = "";
-            Vector2 northCheck = new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x), Mathf.RoundToInt(createdRooms[i].transform.position.y + 1));
-            Vector2 eastCheck = new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x + 1), Mathf.RoundToInt(createdRooms[i].transform.position.y));
-            Vector2 southCheck = new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x), Mathf.RoundToInt(createdRooms[i].transform.position.y - 1));
-            Vector2 westCheck = new Vector2(Mathf.RoundToInt(createdRooms[i].transform.position.x - 1), Mathf.RoundToInt(createdRooms[i].transform.position.y));
+            Vector2 northCheck = new Vector2(
+                Mathf.RoundToInt(createdRooms[i].transform.position.x), 
+                Mathf.RoundToInt(createdRooms[i].transform.position.y + roomOffset));
+            Vector2 eastCheck = new Vector2(
+                Mathf.RoundToInt(createdRooms[i].transform.position.x + roomOffset), 
+                Mathf.RoundToInt(createdRooms[i].transform.position.y));
+            Vector2 southCheck = new Vector2(
+                Mathf.RoundToInt(createdRooms[i].transform.position.x), 
+                Mathf.RoundToInt(createdRooms[i].transform.position.y - roomOffset));
+            Vector2 westCheck = new Vector2(
+                Mathf.RoundToInt(createdRooms[i].transform.position.x - roomOffset), 
+                Mathf.RoundToInt(createdRooms[i].transform.position.y));
             // assign necessary starting variables
             if (spriteName.Contains("n") && !roomPositions.Contains(northCheck) || spriteName.Contains("n") && roomPositions.Contains(northCheck) && 
                 !createdRooms[roomPositions.IndexOf(northCheck)].GetComponent<SpriteRenderer>().sprite.name.Contains("s")) {
