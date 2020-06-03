@@ -175,7 +175,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 10
+  orthographic size: 100
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -302,7 +302,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: a6635e5d571d9084da0a3bff64363dac, type: 3}
   roomPrefab: {fileID: 6051547129883310545, guid: ecea653350bd6db448307a32d23cabe2,
     type: 3}
-  roomOffset: 5
+  roomOffset: 10
   desiredRooms: 100
   roomPositions: []
   createdRooms: []
