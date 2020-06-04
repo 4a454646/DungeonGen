@@ -300,6 +300,23 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 6c01a10071322ad4bad4ae0522ca1106, type: 3}
   - {fileID: 21300000, guid: cbbeed82083ccd84a9c47a9836d9756b, type: 3}
   - {fileID: 21300000, guid: a6635e5d571d9084da0a3bff64363dac, type: 3}
+  roomObstacles:
+  - {fileID: 1000853773038350536, guid: aa2b688b228de384685508eff92325a7, type: 3}
+  - {fileID: 2410349105729538444, guid: 78e1268d49f137f45aa25e1e88600b8b, type: 3}
+  - {fileID: 4511691155073864212, guid: 37831188170f06c4d93fd7ac4d8174f1, type: 3}
+  - {fileID: 1981261963141896465, guid: 2890ea7fba7f1364193d6b86448f483d, type: 3}
+  - {fileID: 6404381257376001935, guid: f9dfccbbcc8b62548accb7219bbbd79d, type: 3}
+  - {fileID: 308195946806378285, guid: e9ab9b342dbf4154f978d5781f5d6791, type: 3}
+  - {fileID: 4680723207873615644, guid: e1ecfdc1ac9be3942a9410eb40988662, type: 3}
+  - {fileID: 8339961440383016531, guid: 283908e3e2aeeef48bed8026c2e947b5, type: 3}
+  - {fileID: 7878952306738351794, guid: 15d41b73b8df2194089f4084a6c03ade, type: 3}
+  - {fileID: 1346305406464475374, guid: 52a600449122b1f46ab5138f8882e774, type: 3}
+  - {fileID: 708074186808289523, guid: 539906dcf49ab6f46a8782ef5758b4df, type: 3}
+  - {fileID: 233262978134465841, guid: 1b7ef9a12f40b4e4cafd638ed6bcb028, type: 3}
+  - {fileID: 6660052805935840398, guid: 7833f7fea9173d6428b90d855e37625d, type: 3}
+  - {fileID: 7799055244111421857, guid: bc5f001dd6c08ba4faf0f070820f0190, type: 3}
+  - {fileID: 5033711988886858077, guid: 668fc1d0d7d74254380c035fa20150b1, type: 3}
+  - {fileID: 2535862269516943192, guid: aa3b114f5b33eb54e9e74ed547b4ce56, type: 3}
   roomPrefab: {fileID: 6051547129883310545, guid: ecea653350bd6db448307a32d23cabe2,
     type: 3}
   roomOffset: 10

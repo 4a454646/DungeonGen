@@ -9,6 +9,7 @@ public class Room : MonoBehaviour {
     public string needsEntranceAt;
 
     private void Start() {
-
+        
     }
+
 }

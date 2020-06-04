@@ -24,6 +24,8 @@ public class DungeonAssembler : MonoBehaviour {
     [SerializeField] private List<Sprite> westSprites = new List<Sprite>();
     [SerializeField] private List<Sprite> allSprites = new List<Sprite>();
     // lists of sprites for rooms to use
+    [SerializeField] private List<GameObject> roomObstacles = new List<GameObject>();
+    // list of obstacles to place in a room
     [SerializeField] private GameObject roomPrefab;
     // gameobject to instantiate
     [SerializeField] private float roomOffset;
@@ -38,6 +40,8 @@ public class DungeonAssembler : MonoBehaviour {
     // list of roomDatas which we take from
     private WaitForSeconds shortDelay = new WaitForSeconds(0f);
     // just to make it animated/cool
+    private Vector2 zeroZero = new Vector2(0, 0);
+    private Vector2 oneOne = new Vector2(1, 1);
 
     private void Start() {
         CreateRoom(new Vector2(0, 0), "starter");
@@ -123,6 +127,8 @@ public class DungeonAssembler : MonoBehaviour {
             roomsToCreate.Add(new RoomData(new Vector2(pos.x - 1, pos.y), "e"));
         }
         else { ParentColliderTo("west wall collider", created); }
+        GenerateObstacle(created, roomNeedsEntranceAt);
+        // add an obstacle to the room
     }
 
     /// <summary>
@@ -177,8 +183,10 @@ public class DungeonAssembler : MonoBehaviour {
             room.GetComponent<SpriteRenderer>().sprite = allSprites[(from sprite in allSprites select sprite.name).ToList().IndexOf(wantedEntrances)];
             // locate the sprite by name
             foreach (Transform child in createdRooms[i].transform) {
-                Destroy(child.gameObject);
-                // destroy all children (colliders)
+                if (child.name.Contains("collider")) {
+                    Destroy(child.gameObject);
+                }
+                // destroy all colliders
             }
             if (createdRooms[i].GetComponent<SpriteRenderer>().sprite.name.Contains("n")) {
                 ParentColliderTo("north path collider", createdRooms[i]);
@@ -207,11 +215,11 @@ public class DungeonAssembler : MonoBehaviour {
     /// <param name="colliderName">The name of the collider to match to.</param>
     /// <param name="parentTo">The gameobject to chil the collider to.</param>
     private void ParentColliderTo(string colliderName, GameObject parentTo) {
-        GameObject collider = Instantiate(colliderList[(from col in colliderList select col.name).ToList().IndexOf(colliderName)], new Vector3(0, 0, 0), Quaternion.identity);
+        GameObject collider = Instantiate(colliderList[(from col in colliderList select col.name).ToList().IndexOf(colliderName)], zeroZero, Quaternion.identity);
         // get the collider based on its name
         collider.transform.parent = parentTo.transform;
         // child the collider to the gameobject
-        collider.transform.localPosition = new Vector2(0, 0);
+        collider.transform.localPosition = zeroZero;
         // set the collider's localposition to be normal
     }
 
@@ -246,5 +254,19 @@ public class DungeonAssembler : MonoBehaviour {
             created.GetComponent<SpriteRenderer>().color = Color.red;
         }
         // assign a treasure room at 1/3, 2/3, and boss room as the final (in terms of room creation)
+    }
+
+    private void GenerateObstacle(GameObject created, string isStarter) {
+        GameObject obstacle;
+        if (isStarter == "starter") {
+            // if starting room, no obstacle wanted, so do the blank one
+            obstacle = Instantiate(roomObstacles[0], zeroZero, Quaternion.identity);
+        }
+        else {
+            int rand = Random.Range(0, roomObstacles.Count);
+            obstacle = Instantiate(roomObstacles[rand], zeroZero, Quaternion.identity);
+        }
+        obstacle.transform.parent = created.transform;
+        obstacle.transform.localPosition = zeroZero;
     }
 }
