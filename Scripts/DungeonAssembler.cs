@@ -14,6 +14,7 @@ public class RoomData {
 }
 
 public class DungeonAssembler : MonoBehaviour {
+    [SerializeField] private GameObject player;
     [SerializeField] private List<GameObject> colliderList = new List<GameObject>();
     // list of colliders to attach to a room
     [SerializeField] private Sprite startSprite;
@@ -38,10 +39,17 @@ public class DungeonAssembler : MonoBehaviour {
     // list of created chunks
     [SerializeField] private List<RoomData> roomsToCreate = new List<RoomData>();
     // list of roomDatas which we take from
+    [SerializeField] private GameObject roomParent;
+    [SerializeField] private Camera mainCamera;
     private WaitForSeconds shortDelay = new WaitForSeconds(0f);
     // just to make it animated/cool
+    private WaitForSeconds longDelay = new WaitForSeconds(0.5f);
     private Vector2 zeroZero = new Vector2(0, 0);
     private Vector2 oneOne = new Vector2(1, 1);
+    [SerializeField] private bool showMinimap = false;
+    [SerializeField] private GameObject minimap;
+    [SerializeField] private GameObject blackScreen;
+    [SerializeField] private GameObject playerIndicator;
 
     private void Start() {
         CreateRoom(new Vector2(0, 0), "starter");
@@ -52,6 +60,8 @@ public class DungeonAssembler : MonoBehaviour {
         // create the starter rooms
         StartCoroutine(CreateAllRoomsCoro());
         // create all the rooms witht the coro
+        blackScreen.SetActive(false);
+        playerIndicator.SetActive(false);
     }
 
     /// <summary>
@@ -104,8 +114,6 @@ public class DungeonAssembler : MonoBehaviour {
         // get the name of the sprite, e.g. 'ew' for east and west entrances
         if (spriteName.Contains("n")) {
             // if the sprite has an entrance pointing north
-            ParentColliderTo("north path collider", created);
-            // assign the correct collider to that hallway
             roomsToCreate.Add(new RoomData(new Vector2(pos.x, pos.y + 1), "s"));
             // add a roomData object to the list, specifying it's position and required entrance
         }
@@ -113,22 +121,20 @@ public class DungeonAssembler : MonoBehaviour {
         // no entrance pointing north, so use the correct collider
         // same process for all other directions
         if (spriteName.Contains("e")) {
-            ParentColliderTo("east path collider", created);
             roomsToCreate.Add(new RoomData(new Vector2(pos.x + 1, pos.y), "w"));
         }
         else { ParentColliderTo("east wall collider", created); }
         if (spriteName.Contains("s")) {
-            ParentColliderTo("south path collider", created);
             roomsToCreate.Add(new RoomData(new Vector2(pos.x, pos.y - 1), "n"));
         }
         else { ParentColliderTo("south wall collider", created); }
         if (spriteName.Contains("w")) {
-            ParentColliderTo("west path collider", created);
             roomsToCreate.Add(new RoomData(new Vector2(pos.x - 1, pos.y), "e"));
         }
         else { ParentColliderTo("west wall collider", created); }
         GenerateObstacle(created, roomNeedsEntranceAt);
         // add an obstacle to the room
+        created.transform.parent = roomParent.transform;
     }
 
     /// <summary>
@@ -182,12 +188,6 @@ public class DungeonAssembler : MonoBehaviour {
             }
             room.GetComponent<SpriteRenderer>().sprite = allSprites[(from sprite in allSprites select sprite.name).ToList().IndexOf(wantedEntrances)];
             // locate the sprite by name
-            foreach (Transform child in createdRooms[i].transform) {
-                if (child.name.Contains("collider")) {
-                    Destroy(child.gameObject);
-                }
-                // destroy all colliders
-            }
             if (createdRooms[i].GetComponent<SpriteRenderer>().sprite.name.Contains("n")) {
                 ParentColliderTo("north path collider", createdRooms[i]);
             }
@@ -203,10 +203,10 @@ public class DungeonAssembler : MonoBehaviour {
             if (createdRooms[i].GetComponent<SpriteRenderer>().sprite.name.Contains("w")) {
                 ParentColliderTo("west path collider", createdRooms[i]);
             }
-            // based on the name, add the necessary colliders
             yield return shortDelay;
             // quick delay (aesthetics)
         }
+        StartCoroutine(GiveControl());
     }
 
     /// <summary>
@@ -235,7 +235,6 @@ public class DungeonAssembler : MonoBehaviour {
             // if creating a starting room
             created.GetComponent<SpriteRenderer>().sprite = startSprite;
             created.GetComponent<SpriteRenderer>().color = Color.green;
-            created.GetComponent<SpriteRenderer>().sortingOrder = 1;
             // set the sprite, make it green, set its sorting order forwards
         }
         else if (roomNeedsEntranceAt == "n") { created.GetComponent<SpriteRenderer>().sprite = northSprites[rand]; }
@@ -243,6 +242,7 @@ public class DungeonAssembler : MonoBehaviour {
         else if (roomNeedsEntranceAt == "s") { created.GetComponent<SpriteRenderer>().sprite = southSprites[rand]; }
         else if (roomNeedsEntranceAt == "w") { created.GetComponent<SpriteRenderer>().sprite = westSprites[rand]; }
         else { print("big error"); }
+        created.GetComponent<SpriteRenderer>().sortingOrder = -1;
         // assign a sprite based on the requirement
         if (createdRooms.Count == Mathf.RoundToInt(desiredRooms / 3)) {
             created.GetComponent<SpriteRenderer>().color = Color.yellow;
@@ -258,8 +258,8 @@ public class DungeonAssembler : MonoBehaviour {
 
     private void GenerateObstacle(GameObject created, string isStarter) {
         GameObject obstacle;
-        if (isStarter == "starter") {
-            // if starting room, no obstacle wanted, so do the blank one
+        if (isStarter == "starter" || createdRooms.Count == Mathf.RoundToInt(desiredRooms / 3) || createdRooms.Count == Mathf.RoundToInt(2 * desiredRooms / 3) || createdRooms.Count == desiredRooms) {
+            // if starting room or any special room, no obstacle wanted, so do the blank one
             obstacle = Instantiate(roomObstacles[0], zeroZero, Quaternion.identity);
         }
         else {
@@ -268,5 +268,50 @@ public class DungeonAssembler : MonoBehaviour {
         }
         obstacle.transform.parent = created.transform;
         obstacle.transform.localPosition = zeroZero;
+    }
+
+    private IEnumerator GiveControl() {
+        yield return longDelay;
+        for (int i = 0; i < 196; i++) {
+            mainCamera.orthographicSize -= 0.5f;
+            yield return shortDelay;
+        }
+        GenerateMinimap();
+    }
+
+    private void GenerateMinimap() {
+        minimap = Instantiate(roomParent, zeroZero, Quaternion.identity);
+        minimap.SetActive(false);
+        minimap.transform.localScale = new Vector2(0.02f, 0.02f);
+        minimap.transform.position = new Vector3(0, 0, -2);
+        foreach (Transform room in minimap.transform) {
+            room.gameObject.GetComponent<SpriteRenderer>().sortingOrder = 2;
+            Destroy(room.gameObject.GetComponent<BoxCollider2D>());
+            foreach (Transform child in room.transform) {
+                Destroy(child.gameObject);
+            }
+        }
+    }
+
+    private void Update() {
+        if (minimap != null) {
+            if (Input.GetKeyDown(KeyCode.M)) {
+                showMinimap = !showMinimap;
+                if (showMinimap) { 
+                    blackScreen.SetActive(true);
+                    minimap.SetActive(true);
+                    playerIndicator.SetActive(true);
+                }
+                else { 
+                    blackScreen.SetActive(false);
+                    minimap.SetActive(false);
+                    playerIndicator.SetActive(false);
+                }
+            }
+            Vector2 playerCoords = new Vector2(player.transform.position.x, player.transform.position.y);
+            blackScreen.transform.position = new Vector3(player.transform.position.x, player.transform.position.y, -1);
+            minimap.transform.position = new Vector3(player.transform.position.x, player.transform.position.y, -1);
+            playerIndicator.transform.position = new Vector3(player.transform.position.x + player.transform.position.x / 50f, player.transform.position.y + player.transform.position.y / 50f, -1);
+        }
     }
 }

@@ -7,9 +7,7 @@ public class Room : MonoBehaviour {
     public Vector2 truePos;
     public Vector2 pos01;
     public string needsEntranceAt;
-
     private void Start() {
         
     }
-
 }
