@@ -234,7 +234,7 @@ public class DungeonAssembler : MonoBehaviour {
         if (roomNeedsEntranceAt == "starter") {
             // if creating a starting room
             created.GetComponent<SpriteRenderer>().sprite = startSprite;
-            created.GetComponent<SpriteRenderer>().color = Color.green;
+            created.GetComponent<SpriteRenderer>().color = Color.cyan;
             // set the sprite, make it green, set its sorting order forwards
         }
         else if (roomNeedsEntranceAt == "n") { created.GetComponent<SpriteRenderer>().sprite = northSprites[rand]; }
