@@ -333,10 +333,14 @@ MonoBehaviour:
   roomPositions: []
   createdRooms: []
   roomsToCreate: []
-  showAnimation: 1
+  showAnimation: 0
   seed: 0
   desiredRooms: 100
   roomOffset: 10
+  redOffset: 10
+  yellowOffset: 10
+  purpleOffset: 10
+  cyanOffset: 10
   startSprite: {fileID: 21300000, guid: d7f9c211da5839946a2152d35f2f6965, type: 3}
   roomPrefab: {fileID: 6051547129883310545, guid: ecea653350bd6db448307a32d23cabe2, type: 3}
   roomParent: {fileID: 469019818}

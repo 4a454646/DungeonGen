@@ -31,11 +31,16 @@ public class DungeonAssembler : MonoBehaviour {
     // list of roomDatas which we take from
     [Header("Creation Variables")]
     [SerializeField] private bool showAnimation;
-    [SerializeField] public int seed = 0;
+    [SerializeField] private int seed = 0;
     [SerializeField] private int desiredRooms;
     // the # of rooms to create
     [SerializeField] private float roomOffset;
     // how much to offset each room by
+    [SerializeField] private int redOffset;
+    [SerializeField] private int yellowOffset;
+    [SerializeField] private int purpleOffset;
+    [SerializeField] private int cyanOffset;
+    // # of rooms to offset each color of room by
     [SerializeField] private Sprite startSprite;
     // the sprite for starting out with
     [SerializeField] private GameObject roomPrefab;
@@ -226,13 +231,11 @@ public class DungeonAssembler : MonoBehaviour {
         else { print("big error"); }
         created.GetComponent<SpriteRenderer>().sortingOrder = -1;
         // assign a sprite based on the requirement
-        if (createdRooms.Count == Mathf.RoundToInt(desiredRooms / 2)) {
-            created.GetComponent<SpriteRenderer>().color = Color.yellow;
-        }
-        else if (createdRooms.Count == desiredRooms) {
-            created.GetComponent<SpriteRenderer>().color = Color.red;
-        }
-        // assign a treasure room half and boss room as the final (in terms of room creation)
+        if (createdRooms.Count == desiredRooms) { created.GetComponent<SpriteRenderer>().color = Color.blue; }
+        else if (prng.Next(0, purpleOffset) == 1) { created.GetComponent<SpriteRenderer>().color = Color.magenta; }
+        else if (prng.Next(0, yellowOffset) == 1) { created.GetComponent<SpriteRenderer>().color = Color.yellow; }
+        else if (prng.Next(0, redOffset) == 1) { created.GetComponent<SpriteRenderer>().color = Color.red; }
+        else if (prng.Next(0, cyanOffset) == 1) { created.GetComponent<SpriteRenderer>().color = Color.cyan; }
     }
 
     private IEnumerator GiveControl() {
