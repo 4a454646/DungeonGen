@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 
 public class DraggableMinimap : MonoBehaviour {
+    public Camera mainCamera;
     public Camera minimapCamera;
     // the camera used for viewing the minimap
     Vector3 downPoint;
@@ -10,6 +11,11 @@ public class DraggableMinimap : MonoBehaviour {
     public bool showMinimap = false;
     public GameObject minimap;
     public GameObject roomParent;
+
+    private void Start() { 
+        mainCamera.enabled = true;
+        minimapCamera.enabled = false;
+    }
 
     private void Update() {
         if (Input.GetKeyDown(KeyCode.M)) {
@@ -49,9 +55,9 @@ public class DraggableMinimap : MonoBehaviour {
         for (int i = 0; i < minimap.transform.childCount; i++) { 
             Transform room = minimap.transform.GetChild(i);
             room.gameObject.GetComponent<SpriteRenderer>().sortingOrder = 2;
-            for (int j = 0; j < room.transform.childCount; j++) {
-                Destroy(room.transform.GetChild(j).gameObject);
-            }
+            // for (int j = 0; j < room.transform.childCount; j++) {
+            //     Destroy(room.transform.GetChild(j).gameObject);
+            // }
         }
     }
 }

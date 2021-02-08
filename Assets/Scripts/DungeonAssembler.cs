@@ -47,11 +47,12 @@ public class DungeonAssembler : MonoBehaviour {
     // gameobject to instantiate
     [SerializeField] private GameObject roomParent;
     [SerializeField] private Camera mainCamera;
+    [SerializeField] private DraggableMinimap minimap;
     private WaitForSeconds shortDelay = new WaitForSeconds(0f);
     // just to make it animated/cool
-    private WaitForSeconds longDelay = new WaitForSeconds(0.5f);
+    private WaitForSeconds longDelay = new WaitForSeconds(0.1f);
     private Vector2 zeroZero = new Vector2(0, 0);
-    private DraggableMinimap minimap;
+    
     private System.Random prng;
 
     private void Start() {
@@ -75,6 +76,7 @@ public class DungeonAssembler : MonoBehaviour {
             // while there are less rooms than wanted
             // can't use a for loop, so just stick with the while loop
             int rand = prng.Next(0, roomsToCreate.Count);
+            // int rand = prng.Next(roomsToCreate.Count - 4, roomsToCreate.Count - 1);
             // get a random number to pick with
             RoomData roomData = roomsToCreate[rand];
             // get the data from that location
@@ -193,7 +195,6 @@ public class DungeonAssembler : MonoBehaviour {
             if (showAnimation) { yield return shortDelay; }
             // quick delay (aesthetics)
         }
-        StartCoroutine(GiveControl());
     }
 
     /// <summary>
@@ -224,6 +225,11 @@ public class DungeonAssembler : MonoBehaviour {
             created.GetComponent<SpriteRenderer>().color = Color.green;
             // set the sprite, make it green, set its sorting order forwards
         }
+        else if (createdRooms.Count % purpleOffset == 0) { 
+            created.GetComponent<SpriteRenderer>().sprite = startSprite; 
+            created.GetComponent<SpriteRenderer>().color = Color.magenta;
+        }
+        else if (createdRooms.Count == 2) { created.GetComponent<SpriteRenderer>().color = Color.magenta; }
         else if (roomNeedsEntranceAt == "n") { created.GetComponent<SpriteRenderer>().sprite = northSprites[rand]; }
         else if (roomNeedsEntranceAt == "e") { created.GetComponent<SpriteRenderer>().sprite = eastSprites[rand]; }
         else if (roomNeedsEntranceAt == "s") { created.GetComponent<SpriteRenderer>().sprite = southSprites[rand]; }
@@ -232,18 +238,8 @@ public class DungeonAssembler : MonoBehaviour {
         created.GetComponent<SpriteRenderer>().sortingOrder = -1;
         // assign a sprite based on the requirement
         if (createdRooms.Count == desiredRooms) { created.GetComponent<SpriteRenderer>().color = Color.blue; }
-        else if (prng.Next(0, purpleOffset) == 1) { created.GetComponent<SpriteRenderer>().color = Color.magenta; }
-        else if (prng.Next(0, yellowOffset) == 1) { created.GetComponent<SpriteRenderer>().color = Color.yellow; }
-        else if (prng.Next(0, redOffset) == 1) { created.GetComponent<SpriteRenderer>().color = Color.red; }
-        else if (prng.Next(0, cyanOffset) == 1) { created.GetComponent<SpriteRenderer>().color = Color.cyan; }
-    }
-
-    private IEnumerator GiveControl() {
-        yield return longDelay;
-        // for (int i = 0; i < 98; i++) {
-        //     mainCamera.orthographicSize -= 1.0f;
-        //     if (showAnimation) { yield return shortDelay; }
-        // }
-        minimap.Generate();
+        else if (createdRooms.Count % cyanOffset == 0) { created.GetComponent<SpriteRenderer>().color = Color.cyan; }
+        else if (createdRooms.Count % yellowOffset == 0) { created.GetComponent<SpriteRenderer>().color = Color.yellow; }
+        else if (createdRooms.Count % redOffset == 0) { created.GetComponent<SpriteRenderer>().color = Color.red; }
     }
 }
