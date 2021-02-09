@@ -28,6 +28,8 @@ public class DungeonAssembler : MonoBehaviour {
     [SerializeField] private List<GameObject> createdRooms = new List<GameObject>();
     // list of created chunks
     [SerializeField] private List<RoomData> roomsToCreate = new List<RoomData>();
+    [SerializeField] private List<Vector2> hallPositions = new List<Vector2>();
+    [SerializeField] private List<GameObject> createdHalls = new List<GameObject>();
     // list of roomDatas which we take from
     [Header("Creation Variables")]
     [SerializeField] private bool showAnimation;
@@ -35,17 +37,20 @@ public class DungeonAssembler : MonoBehaviour {
     [SerializeField] private int desiredRooms;
     // the # of rooms to create
     [SerializeField] private float roomOffset;
+    [SerializeField] private float hallOffset;
     // how much to offset each room by
     [SerializeField] private int redOffset;
     [SerializeField] private int yellowOffset;
     [SerializeField] private int purpleOffset;
-    [SerializeField] private int cyanOffset;
+    [SerializeField] private int greenOffset;
     // # of rooms to offset each color of room by
     [SerializeField] private Sprite startSprite;
     // the sprite for starting out with
     [SerializeField] private GameObject roomPrefab;
     // gameobject to instantiate
+    [SerializeField] private GameObject hallPrefab;
     [SerializeField] private GameObject roomParent;
+    [SerializeField] private GameObject hallParent;
     [SerializeField] private Camera mainCamera;
     [SerializeField] private DraggableMinimap minimap;
     private WaitForSeconds shortDelay = new WaitForSeconds(0f);
@@ -195,6 +200,41 @@ public class DungeonAssembler : MonoBehaviour {
             if (showAnimation) { yield return shortDelay; }
             // quick delay (aesthetics)
         }
+        roomsToCreate.Clear();
+        // StartCoroutine(CreateHallways());
+    }
+
+    private IEnumerator CreateHallways() {
+        if (showAnimation) { yield return shortDelay; }
+        CreateCardinalHalls(createdRooms.Count-1);
+        CreateCardinalHalls(1);
+        for (int i = redOffset-1; i < createdRooms.Count; i += redOffset) { CreateCardinalHalls(i); }
+        for (int i = yellowOffset-1; i < createdRooms.Count; i += yellowOffset) { CreateCardinalHalls(i); }
+        for (int i = greenOffset-1; i < createdRooms.Count; i += greenOffset) { CreateCardinalHalls(i); }
+        for (int i = purpleOffset-1; i < createdRooms.Count; i += purpleOffset) { CreateCardinalHalls(i); }
+        for (int i = 0; i < createdRooms.Count; i++) { CreateCardinalHalls(i); }
+    }
+
+    private void CreateCardinalHalls(int i) { 
+        if (createdRooms[i].name.Contains("n")) { CreateHall(0f, hallOffset, i); }
+        if (createdRooms[i].name.Contains("e")) { CreateHall(hallOffset, 0f, i); }
+        if (createdRooms[i].name.Contains("s")) { CreateHall(0f, -hallOffset, i); }
+        if (createdRooms[i].name.Contains("w")) { CreateHall(-hallOffset, 0f, i); }
+    }
+
+    private void CreateHall(float xIncr, float yIncr, int i) {
+        Vector3 pos = new Vector3(createdRooms[i].transform.position.x + xIncr, createdRooms[i].transform.position.y + yIncr, 0f);
+        if (hallPositions.Contains(pos)) { return; }
+        GameObject created = Instantiate(hallPrefab, pos, Quaternion.identity);
+        created.transform.parent = hallParent.transform;
+        if (yIncr != 0) { created.transform.eulerAngles = new Vector3(0, 0, 90); }
+        if (++i == desiredRooms) { created.GetComponent<SpriteRenderer>().color = Color.blue; }
+        else if (i % purpleOffset == 0 || i == 2) { created.GetComponent<SpriteRenderer>().color = Color.magenta; }
+        else if (i % greenOffset == 0) { created.GetComponent<SpriteRenderer>().color = Color.green; }
+        else if (i % yellowOffset == 0) { created.GetComponent<SpriteRenderer>().color = Color.yellow; }
+        else if (i % redOffset == 0) { created.GetComponent<SpriteRenderer>().color = Color.red; }
+        hallPositions.Add(pos);
+        createdHalls.Add(created);
     }
 
     /// <summary>
@@ -222,7 +262,7 @@ public class DungeonAssembler : MonoBehaviour {
         if (roomNeedsEntranceAt == "starter") {
             // if creating a starting room
             created.GetComponent<SpriteRenderer>().sprite = startSprite;
-            created.GetComponent<SpriteRenderer>().color = Color.green;
+            created.GetComponent<SpriteRenderer>().color = Color.cyan;
             // set the sprite, make it green, set its sorting order forwards
         }
         else if (createdRooms.Count % purpleOffset == 0) { 
@@ -238,7 +278,7 @@ public class DungeonAssembler : MonoBehaviour {
         created.GetComponent<SpriteRenderer>().sortingOrder = -1;
         // assign a sprite based on the requirement
         if (createdRooms.Count == desiredRooms) { created.GetComponent<SpriteRenderer>().color = Color.blue; }
-        else if (createdRooms.Count % cyanOffset == 0) { created.GetComponent<SpriteRenderer>().color = Color.cyan; }
+        else if (createdRooms.Count % greenOffset == 0) { created.GetComponent<SpriteRenderer>().color = Color.green; }
         else if (createdRooms.Count % yellowOffset == 0) { created.GetComponent<SpriteRenderer>().color = Color.yellow; }
         else if (createdRooms.Count % redOffset == 0) { created.GetComponent<SpriteRenderer>().color = Color.red; }
     }
